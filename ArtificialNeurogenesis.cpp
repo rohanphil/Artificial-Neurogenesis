@@ -601,7 +601,7 @@ public:
 		for (int j = 0; j < pred.size(); j++) {
 			if (pred[j] == targets[j][0]) count += 1;
 		}
-		acc = float(count / pred.size());
+		acc = (float)count / pred.size();
 		return acc;
 
 	}
