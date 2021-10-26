@@ -5,7 +5,10 @@
 #include <math.h>
 #include <algorithm>
 #include <numeric>
-
+#include <fstream>
+#include <string>
+#include <vector>
+#include <sstream>
 using namespace std;
 
 class ANG
@@ -58,12 +61,13 @@ public:
 		}
 		return trans_vec;   
 	}
-	void Init(vector<int> hidden_layers, int num_outputs = 1, int num_inputs = 3)
+	void Init(vector<int> hidden_layers, int num_outputs = 1, int num_inputs = 10)
 	{
 		vector<int> layers;
 		layers.push_back(num_inputs);
 		for (int i = 0; i < hidden_layers.size(); i++) layers.push_back(hidden_layers[i]);
 		layers.push_back(num_outputs);
+		for (int lay = 0; lay < layers.size(); lay++) cout << layers[lay] << endl;
 		vector<vector<float>> w;
 		for (int i = 0; i < layers.size() - 1; i++) {
 			int row_len, col_len;
@@ -593,21 +597,25 @@ public:
 		vector<int> pred;
 		for (int i = 0; i < inputs.size(); i++) {
 			vector<float> output = forward_propogate(inputs[i]);
+			cout << output[0] << endl;
 			if (output[0] >= 0.5) pred.push_back(1);
 			else pred.push_back(0);
 		}
 		float acc = 0.0;
 		int count = 0;
 		for (int j = 0; j < pred.size(); j++) {
+			//cout << pred[j] << endl;
 			if (pred[j] == targets[j][0]) count += 1;
 		}
+		//cout << "acc: " << acc << endl;
 		acc = (float)count / pred.size();
+		cout << "acc: " << acc << endl;
 		return acc;
 
 	}
 
-	void ANG_grow(vector<vector<float>> inputs, vector<vector<float>> targets) {
-		Init({ 3,3 });
+	void ANG_grow(vector<vector<float>> inputs, vector<vector<float>> targets, vector<int> hidden_layers) {
+		Init(hidden_layers, 1, inputs[0].size());
 		//cout << weights.size() << endl;
 		prime_base_network(inputs, targets, 10);
 		//cout << weights.size() << endl;
@@ -707,9 +715,48 @@ public:
 			}*/
 			cout << "accuracy: " << accuracy << endl;
 		}
-		cout << "activations size: " << activations.size() << endl;
+		//cout << "activations size: " << activations.size() << endl;
 	}
 };
+
+//new stuff
+void read_files(string filename, vector<vector<float>>& inputs, vector<vector<float>>& targets) {
+	ifstream ip(filename);
+
+	if (!ip.is_open()) cout << "Error" << endl;
+	else cout << "Yay" << endl;
+
+	ip.ignore(500, '\n');
+	//vector<vector<float>> inputs;
+	vector<string> st;
+	while (ip.good()) {
+		vector<float> st;
+		string line;
+		getline(ip, line, '\n');
+		if (line == "") break;
+		stringstream ss(line);
+		//cout << line << endl;
+		while (ss.good()) {
+			std::string::size_type sz;
+			string sbstr;
+			getline(ss, sbstr, ',');
+			float val = stof(sbstr);
+			st.push_back(val);
+		}
+		//cout << st.size() << endl;
+		inputs.push_back(st);
+	}
+	ip.close();
+	cout << inputs.size() << endl;
+	//vector<vector<float>> targets;
+	for (int tar = 0; tar < inputs.size(); tar++) {
+		vector<float> t;
+		t.push_back(inputs[tar].back());
+		targets.push_back(t);
+		inputs[tar].pop_back();
+	}
+	return;
+}
 
 int main()
 {
@@ -724,9 +771,13 @@ int main()
 	//vector<float> error = { -0.23686151, -0.27602096 };
 	//ang.gradient_descent();
 	//ang.back_propogate(error);
-	vector<vector<float>>  i = { {1, 2, 1}, {1, 4, 4}, {1, 2, 3} , { 1,2,4} ,{4,5,1}, {5,2,4} , {2,0,1}, {6,3,4} ,{4,3,5} , {4,4,1} };
-	vector<vector<float>> t = { {1} , {0}, {1} , {0}, {1}, {1}, {0} , {0}, {1}, {0} };
-	ang.ANG_grow(i, t);
+	vector<vector<float>> inputs, targets;
+	string filename = "D:/Tests/Titanic/train_titanic.csv";
+	read_files(filename, inputs, targets);
+	//ang.PrintMatrix(inputs);
+	//vector<vector<float>>  i = { {1, 1, 1}, {0, 0, 0}, {1, 1, 1} , {0,0,0} ,{1,1,1}, {1,1,1} , {0,0,0}, {0,0,0} ,{1,1,1} , {0,0,0}, {1, 1, 1}, {0, 0, 0}, {1, 1, 1} , { 0,0,0} ,{1,1,1}, {1,1,1} , {0,0,0}, {0,0,0} ,{1,1,1} , {0,0,0}, {1, 1, 1}, {0, 0, 0}, {1, 1, 1} , { 0,0,0} ,{1,1,1}, {1,1,1} , {0,0,0}, {0,0,0} ,{1,1,1} , {0,0,0}, {1, 1, 1}, {0, 0, 0}, {1, 1, 1} , { 0,0,0} ,{1,1,1}, {1,1,1} , {0,0,0}, {0,0,0} ,{1,1,1} , {0,0,0}, {1, 1, 1}, {0, 0, 0}, {1, 1, 1} , { 0,0,0} ,{1,1,1}, {1,1,1} , {0,0,0}, {0,0,0} ,{1,1,1} , {0,0,0} };
+	//vector<vector<float>> t = { {1} , {0}, {0} , {0}, {1}, {1}, {0} , {0}, {1}, {0}, {1} , {0}, {1} , {0}, {1}, {1}, {0} , {0}, {1}, {0}, {1} , {0}, {1} , {0}, {1}, {1}, {0} , {0}, {1}, {0}, {1} , {0}, {1} , {0}, {1}, {1}, {0} , {0}, {1}, {0}, {1} , {0}, {1} , {0}, {1}, {1}, {0} , {0}, {1}, {0} };
+	ang.ANG_grow(inputs, targets, {24,24});
 	//ang.create_seed();
 	//ang.create_temp_classifier_seed(t);
 	//cout << ang.seed_activations.size() << endl;
