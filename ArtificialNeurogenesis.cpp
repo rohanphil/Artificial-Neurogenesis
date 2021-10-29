@@ -67,7 +67,7 @@ public:
 		layers.push_back(num_inputs);
 		for (int i = 0; i < hidden_layers.size(); i++) layers.push_back(hidden_layers[i]);
 		layers.push_back(num_outputs);
-		for (int lay = 0; lay < layers.size(); lay++) cout << layers[lay] << endl;
+		//for (int lay = 0; lay < layers.size(); lay++) cout << layers[lay] << endl;
 		vector<vector<float>> w;
 		for (int i = 0; i < layers.size() - 1; i++) {
 			int row_len, col_len;
@@ -331,8 +331,8 @@ public:
 		int r, c;
 		// add new weights 
 		temp = weights.back();
-		r = temp.size();
-		c = temp[0].size();
+		r = temp.size(); //changed to set the size of the destionation layer to a minimum 3
+		c = 3;//temp[0].size();
 		vector < vector <float>> Matrix(r, vector<float>(c, 0));
 		for (auto it_row = Matrix.begin(); it_row != Matrix.end(); it_row++)
 		{
@@ -345,7 +345,7 @@ public:
 		}
 		temp = Matrix;
 		weights.push_back(temp);
-
+		for (int wei = 0; wei < weights.size(); wei++) cout << "The matrices are of shape " << weights[wei].size() << " x " << weights[wei][0].size() << endl;
 		// add new derivatives
 		temp = derivatives.back();
 		vector < vector <float>> Matrix_dr(r, vector<float>(c, 0.0));
@@ -354,7 +354,7 @@ public:
 
 		// add new activations
 		vector<float> temp_acc = activations.back();
-		int row_len = temp_acc.size();
+		int row_len = 3;//temp_acc.size();
 		vector<float> Matrix_acc(row_len, 0);
 		temp_acc = Matrix_acc;
 		activations.push_back(temp_acc);
@@ -747,7 +747,7 @@ void read_files(string filename, vector<vector<float>>& inputs, vector<vector<fl
 		inputs.push_back(st);
 	}
 	ip.close();
-	cout << inputs.size() << endl;
+	cout <<"number of rows: " << inputs.size() << endl;
 	//vector<vector<float>> targets;
 	for (int tar = 0; tar < inputs.size(); tar++) {
 		vector<float> t;
@@ -762,15 +762,6 @@ int main()
 {
 	cout << "Hello \n";
 	ANG ang;
-	//vector<int> hidden_layers = {3,3};
-	//ang.Init(hidden_layers);
-	//vector<float> inputs = {1.0, 0.5, 1.0};
-	//vector<float> output = ang.forward_propogate(inputs);
-	//for (int j = 0; j < output.size(); j++)
-		//cout << output[j] << " ";
-	//vector<float> error = { -0.23686151, -0.27602096 };
-	//ang.gradient_descent();
-	//ang.back_propogate(error);
 	vector<vector<float>> inputs, targets;
 	string filename = "D:/Tests/Titanic/train_titanic.csv";
 	read_files(filename, inputs, targets);
