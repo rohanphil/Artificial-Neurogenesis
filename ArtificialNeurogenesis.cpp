@@ -350,7 +350,7 @@ public:
 		// add new weights 
 		temp = weights.back();
 		r = temp.size(); //changed to set the size of the destionation layer to a minimum 3
-		c = temp[0].size();
+		c = 1;// temp[0].size();
 		vector < vector <float>> Matrix(r, vector<float>(c, 0));
 		for (auto it_row = Matrix.begin(); it_row != Matrix.end(); it_row++)
 		{
@@ -372,7 +372,7 @@ public:
 
 		// add new activations
 		vector<float> temp_acc = activations.back();
-		int row_len = temp_acc.size();
+		int row_len = 1;// temp_acc.size();
 		vector<float> Matrix_acc(row_len, 0);
 		temp_acc = Matrix_acc;
 		activations.push_back(temp_acc);
@@ -699,8 +699,11 @@ public:
 					for (int conn = 0; conn < fp_output.size(); conn++) {
 						if (fp_output[conn] >= x * sd || fp_output[conn] < -x * sd) cout << "This is a critical connection" << endl;
 						else {
-							cout << "This is not a critical connection";
-							for (int wl = 0; wl < weights.back().size(); wl++) weights.back()[wl][conn] = 0;
+							cout << "This is not a critical connection" << endl;
+							cout << fp_output.size() << endl;
+							for (int wl = 0; wl < weights.back().size(); wl++)
+								for(int c = 0; c< weights.back()[0].size(); c++)
+									weights.back()[wl][c] = 0;
 						}
 					}
 				}
@@ -743,10 +746,10 @@ public:
 		oa&* (this);
 	}
 
-	void load(ostringstream& oss)
+	void load(istringstream& iss)
 	{
-		std::string str_data = oss.str();
-		std::istringstream iss(str_data);
+		//std::string str_data = oss.str();
+		//std::istringstream iss(str_data);
 		boost::archive::binary_iarchive ia(iss);
 		ia&* (this);
 	}
@@ -825,8 +828,13 @@ int main()
 	ang = Train_ng(i, t, { 3,3 });
 	std::ostringstream oss;
 	ang.save(oss);
+	string s = oss.str();
 	ANG ang1;
-	ang1.load(oss);
+	std::istringstream iss;
+	iss.str(s);
+	ang1.load(iss);
+	vector<int> pred1 = test(ang, i);
+	for (int i = 0; i < pred1.size(); i++) cout << pred1[i] << " ";
 	vector<int> pred = test(ang1, i);
 	for (int i = 0; i < pred.size(); i++) cout << pred[i] << " ";
 	//ang.ANG_grow(i, t, {3,3});
