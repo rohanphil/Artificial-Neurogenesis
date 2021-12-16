@@ -323,7 +323,7 @@ public:
 		activ.push_back(inputs);
 		for (int i = 0; i < weights.size(); i++) {
 			//cout << weights[i].size() << " " << endl;
-			net_inputs = dot_product(activ, weights[i]);
+			net_inputs = dot_new(activ, weights[i]);
 			vector<float> temp_activ;
 			temp_activ = _sigmoid(net_inputs[0]);
 			activ.pop_back();
@@ -341,7 +341,7 @@ public:
 		activ.push_back(inputs);
 		for (int i = 0; i < weights.size(); i++) {
 			//cout << weights[i].size() << " " << endl;
-			net_inputs = dot_product(activ, weights[i]);
+			net_inputs = dot_new(activ, weights[i]);
 			vector<float> temp_activ;
 			temp_activ = _sigmoid(net_inputs[0]);
 			activ.pop_back();
@@ -426,13 +426,14 @@ public:
 		//cout << activations.size() << endl;
 		seed_derivatives = derivatives;
 		seed_weights.resize(seed_weights.size() - 2);
-		seed_activations.resize(seed_activations.size() - 1);
+		seed_activations.resize(seed_activations.size() - 2);
 		//cout << seed_activations.size() << endl;
 		seed_derivatives.resize(seed_derivatives.size() - 2);
 	}
 
 	void prime_base_network(vector<vector<float>> inputs, vector<vector<float>> targets, int cycles, float learning_rate = 0.5) {
 		train(inputs, targets, cycles, learning_rate);
+		Print3D(weights);
 	}
 
 	void remove_temp_classifier() {
@@ -446,7 +447,8 @@ public:
 		int r, c;
 		// add new weights 
 		temp = weights.back();
-		r = temp.size(); //changed to set the size of the destionation layer to a minimum 3
+		//PrintMatrix(temp);
+		r = temp[0].size(); //changed to set the size of the destionation layer to a minimum 3
 		c = 1;// temp[0].size();
 		vector < vector <float>> Matrix(r, vector<float>(c, 0));
 		for (auto it_row = Matrix.begin(); it_row != Matrix.end(); it_row++)
@@ -527,7 +529,7 @@ public:
 		vector<vector<float>> temp_w;
 		int r, c;
 		temp_w = seed_weights.back();
-		r = temp_w.size();
+		r = temp_w[0].size();
 		c = num_classes;
 		vector < vector <float>> Matrix(r, vector<float>(c, 0));
 		//PrintMatrix(Matrix);
@@ -566,7 +568,7 @@ public:
 		activ.push_back(inputs);
 		for (int i = 0; i < seed_weights.size(); i++) {
 			//cout << weights[i].size() << " " << endl;
-			net_inputs = dot_product(activ, seed_weights[i]);
+			net_inputs = dot_new(activ, seed_weights[i]);
 			vector<float> temp_activ;
 			temp_activ = _sigmoid(net_inputs[0]);
 			activ.pop_back();
@@ -664,7 +666,7 @@ public:
 			}
 			//cout << count << endl;
 			vector<float> sum_perceptron, avg_perceptron;
-			for (int k = 0; k < seed_weights.back().size(); k++) sum_perceptron.push_back(0);
+			for (int k = 0; k < seed_weights.back()[0].size(); k++) sum_perceptron.push_back(0);
 			//filter indices
 			vector<float> filter_indices;
 			//cout << temp.size() << endl;
@@ -738,8 +740,10 @@ public:
 		remove_temp_classifier();
 		//cout << weights.size() << endl;
 		add_destination_layer();
+		//Print3D(weights);
 		//cout << weights.size() << endl;
 		add_class_layer(targets);
+		//Print3D(weights);
 		//cout << weights.size() << endl;
 		float accuracy = 0.0;
 		int percep = 0;
@@ -757,7 +761,7 @@ public:
 				extremes.push_back(sorted_classes[i].back());
 				//PrintMatrix(extremes);
 				for (int ext = 0; ext < extremes.size(); ext++) {
-					vector<float> output = forward_propogate_test(extremes[ext]);
+					vector<float> output = forward_propogate(extremes[ext]);
 					vector<float> fp_output = return_source_activations();
 					float sum_op = 0.0;
 					for (int fpo = 0; fpo < fp_output.size(); fpo++) sum_op += fp_output[fpo];
@@ -1007,7 +1011,7 @@ void read_files(string filename, vector<vector<float>>& inputs, vector<vector<fl
 
 ANG Train_ng(vector<vector<float>> inputs, vector<vector<float>> targets, vector<int> hidden_layers) {
 
-	ANG ang(hidden_layers, 1, inputs[0].size());
+	ANG ang(hidden_layers, targets[0].size(), inputs[0].size());
 	ang.ANG_grow(inputs, targets, hidden_layers);
 
 	return ang;
@@ -1035,7 +1039,7 @@ int main()
 	//ang.PrintMatrix(inputs);
 	vector<vector<float>>  i = { {1, 1, 1}, {0, 0, 0}, {1, 1, 1} , {0,0,0} ,{1,1,1}, {1,1,1} , {0,0,0}, {0,0,0} ,{1,1,1} , {0,0,0}, {1, 1, 1}, {0, 0, 0}, {1, 1, 1} , { 0,0,0} ,{1,1,1}, {1,1,1} , {0,0,0}, {0,0,0} ,{1,1,1} , {0,0,0}, {1, 1, 1}, {0, 0, 0}, {1, 1, 1} , { 0,0,0} ,{1,1,1}, {1,1,1} , {0,0,0}, {0,0,0} ,{1,1,1} , {0,0,0}, {1, 1, 1}, {0, 0, 0}, {1, 1, 1} , { 0,0,0} ,{1,1,1}, {1,1,1} , {0,0,0}, {0,0,0} ,{1,1,1} , {0,0,0}, {1, 1, 1}, {0, 0, 0}, {1, 1, 1} , { 0,0,0} ,{1,1,1}, {1,1,1} , {0,0,0}, {0,0,0} ,{1,1,1} , {0,0,0} };
 	vector<vector<float>> t = { {1} , {0}, {0} , {0}, {1}, {1}, {0} , {0}, {1}, {0}, {1} , {0}, {1} , {0}, {1}, {1}, {0} , {0}, {1}, {0}, {1} , {0}, {1} , {0}, {1}, {1}, {0} , {0}, {1}, {0}, {1} , {0}, {1} , {0}, {1}, {1}, {0} , {0}, {1}, {0}, {1} , {0}, {1} , {0}, {1}, {1}, {0} , {0}, {1}, {0} };
-	ang = Train_ng(i, t, { 3,3 });
+	ang = Train_ng(i, t, {3,4});
 	//std::ostringstream oss;
 	//ang.save(oss);
 	ang.save_model("saveloadtest");
