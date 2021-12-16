@@ -9,14 +9,25 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include<boost/archive/binary_iarchive.hpp>
-#include<boost/archive/binary_oarchive.hpp>
-#include <boost/serialization/vector.hpp>
+#include <iterator>
+//#include <boost/archive/binary_iarchive.hpp>
+//#include <boost/archive/binary_oarchive.hpp>
+//#include <boost/serialization/vector.hpp>
+//#include <pybind11/pybind11.h>
+//#include <Python.h>
+//#include <pybind11/embed.h>
 
 using namespace std;
 
 class ANG
 {
+
+	vector<vector<float>> activations;
+	vector<vector<vector<float>>> derivatives;
+	vector<vector<vector<float>>> weights;
+	vector<vector<vector<float>>> seed_weights, seed_derivatives;
+	vector<vector<float>> seed_activations;
+	/*
 private:
 	friend class boost::serialization::access;
 	template<class Archive>
@@ -28,8 +39,88 @@ private:
 		ar& seed_derivatives;
 		ar& seed_activations;
 	}
+	*/
 
 public:
+	//Default Constructor
+	ANG(){
+		activations = {};
+		derivatives = {};
+		weights = {};
+		seed_weights = {};
+		seed_derivatives = {};
+		seed_activations = {};
+	}
+	//Parameterized Constructor
+	ANG(vector<int> hidden_layers, int num_outputs = 1, int num_inputs = 10) {
+		vector<int> layers;
+		layers.push_back(num_inputs);
+		for (int i = 0; i < hidden_layers.size(); i++) layers.push_back(hidden_layers[i]);
+		layers.push_back(num_outputs);
+		//for (int lay = 0; lay < layers.size(); lay++) cout << layers[lay] << endl;
+		vector<vector<float>> w;
+		for (int i = 0; i < layers.size() - 1; i++) {
+			int row_len, col_len;
+			row_len = layers[i];
+			col_len = layers[i + 1];
+			//srand(time(0));
+			vector < vector <float>> Matrix(row_len, vector<float>(col_len, 0));
+			for (auto it_row = Matrix.begin(); it_row != Matrix.end(); it_row++)
+			{
+				// Getting each (i,j) element and assigning random value to it
+				for (auto it_col = it_row->begin(); it_col != it_row->end(); it_col++)
+				{
+					*it_col = (float)rand() / RAND_MAX;
+					//cout << *it_col;
+				}
+			}
+			w = Matrix;
+			weights.push_back(w);
+		}
+		//for (int i = 0; i < w.size(); i++) {
+			//for (int j = 0; j < w[i].size(); j++)
+				//cout << w[i][j] << " ";  
+			//cout << endl;
+		//}
+
+		vector<vector<float>> d;
+		for (int i = 0; i < layers.size() - 1; i++) {
+			int row_len, col_len;
+			row_len = layers[i];
+			col_len = layers[i + 1];
+			vector < vector <float>> Matrix(row_len, vector<float>(col_len, 0.0));
+			d = Matrix;
+			derivatives.push_back(d);
+		}
+		//for (int i = 0; i < w.size(); i++) {
+			//for (int j = 0; j < w[i].size(); j++)
+				//cout << w[i][j] << " ";  
+			//cout << endl;
+		//}
+
+
+		vector<float> a;
+		for (int i = 0; i < layers.size(); i++) {
+			int row_len, col_len;
+			row_len = layers[i];
+			vector<float> Matrix(row_len, 0);
+			a = Matrix;
+			activations.push_back(a);
+		}
+		//for (int i = 0; i < w.size(); i++) {
+			//for (int j = 0; j < w[i].size(); j++)
+				//cout << w[i][j] << " ";  
+			//cout << endl;
+		//}
+		//cout << weights.size() << " ";
+		//for (int i = 0; i < weights.size(); i++) {
+			//for (int j = 0; j < weights[i].size(); j++) {
+			//	for (int k = 0; k < weights[i][j].size(); k++)
+			//		cout << weights[i][j][k] << " ";
+			//	cout << endl;
+			//}
+		//}
+	}
 	//friend class boost::serialization::access;
 	vector<int> sorted_index(int size, vector<float> b) {
 		vector<int> indices(size);
@@ -37,13 +128,18 @@ public:
 		sort(indices.begin(), indices.end(), [&](int A, int B) -> bool {return b[A] < b[B];});
 		return indices;
 	}
-	vector<vector<float>> activations;
-	vector<vector<vector<float>>> derivatives;
-	vector<vector<vector<float>>> weights;
-	vector<vector<vector<float>>> seed_weights, seed_derivatives;
-	vector<vector<float>> seed_activations;
 
-	//Init done
+	void Print3D(vector<vector<vector<float>>> a) {
+		for (int i = 0; i < a.size(); i++) {
+			for (int j = 0; j < a[i].size(); j++) {
+				for (int k = 0; k < a[i][j].size(); k++) {
+					cout << a[i][j][k] << " ";
+				}
+				cout << endl;
+			}
+			cout << "#" << endl;
+		}
+	}
 	float stdev(vector<float> data) {
 		int size = data.size();
 		float mean, sd = 0.0, sum = 0.0;
@@ -79,6 +175,7 @@ public:
 		}
 		return trans_vec;   
 	}
+	//init not in use anymore
 	void Init(vector<int> hidden_layers, int num_outputs = 1, int num_inputs = 10)
 	{
 		vector<int> layers;
@@ -634,7 +731,7 @@ public:
 	}
 
 	void ANG_grow(vector<vector<float>> inputs, vector<vector<float>> targets, vector<int> hidden_layers) {
-		Init(hidden_layers, 1, inputs[0].size());
+		//Init(hidden_layers, 1, inputs[0].size());
 		//cout << weights.size() << endl;
 		prime_base_network(inputs, targets, 10);
 		//cout << weights.size() << endl;
@@ -739,7 +836,7 @@ public:
 		}
 		//cout << "activations size: " << activations.size() << endl;
 	}
-
+	/*
 	void save(ostringstream& oss)
 	{
 		boost::archive::binary_oarchive oa(oss);
@@ -752,6 +849,119 @@ public:
 		//std::istringstream iss(str_data);
 		boost::archive::binary_iarchive ia(iss);
 		ia&* (this);
+	}
+	*/
+	void save_weights_der(vector<vector<vector<float>>> Matrix, string name) {
+		ofstream output_file(name + ".txt");
+		ostream_iterator<float> output_iterator(output_file, ",");
+		for (int i = 0; i < Matrix.size(); i++) {
+
+			for (int j = 0; j <Matrix[i].size(); j++) {
+				//cout << j;
+				copy(Matrix[i][j].begin(), Matrix[i][j].end() - 1, output_iterator);
+				output_file << Matrix[i][j].back();
+				output_file << "\n";
+			}
+			output_file << "#\n";
+		}
+
+		output_file.close();
+
+	}
+
+	void save_activations(vector<vector<float>> Matrix, string name) {
+
+		ofstream output_file(name + ".txt");
+		ostream_iterator<float> output_iterator(output_file, ",");
+
+		for (int j = 0; j < Matrix.size(); j++) {
+			//cout << j;
+			copy(Matrix[j].begin(), Matrix[j].end() - 1, output_iterator);
+			output_file << Matrix[j].back();
+			output_file << "\n";
+		}
+
+		output_file.close();
+	
+	}
+
+	void read_weights_der(vector<vector<vector<float>>>& Matrix, string name) {
+
+		std::ifstream in(name + ".txt");
+		std::string str;
+		vector<vector<vector<float>>> weights;
+		vector<vector<float>> st;
+		while (in.good())
+		{
+			string line;
+			vector<float> row;
+			getline(in, line, '\n');
+			if (line == "") break;
+			if (line == "#") {
+				weights.push_back(st);
+				st = {};
+				//cout <<"size" << st.size() << endl;
+				continue;
+			}
+			//cout << "size" << st.size() << endl;
+			stringstream ss(line);
+
+			while (ss.good()) {
+				//std::string::size_type sz;
+				string sbstr;
+				getline(ss, sbstr, ',');
+				float val = stof(sbstr);
+				row.push_back(val);
+			}
+
+			st.push_back(row);
+
+		}
+
+		Matrix = weights;
+	}
+
+	void read_activations(vector<vector<float>>& Act, string name) {
+		vector<vector<float>> A;
+		ifstream ip(name + ".txt");
+		while (ip.good()) {
+			vector<float> st;
+			string line;
+			getline(ip, line, '\n');
+			if (line == "") break;
+			stringstream ss(line);
+			//cout << line << endl;
+			while (ss.good()) {
+				std::string::size_type sz;
+				string sbstr;
+				getline(ss, sbstr, ',');
+				float val = stof(sbstr);
+				st.push_back(val);
+			}
+			A.push_back(st);
+		}
+
+		Act = A;
+
+	}
+
+	void save_model(string name) {
+		save_weights_der(weights, name + "_weights");
+		save_weights_der(derivatives, name + "_derivatives");
+		save_weights_der(seed_weights, name + "_seed_weights");
+		save_weights_der(seed_derivatives, name + "_seed_derivatives");
+		save_activations(activations, name + "_activations");
+		save_activations(seed_activations, name + "_seed_activations");
+		
+	}
+
+	void load_model(string name) {
+		read_weights_der(weights, name + "_weights");
+		read_weights_der(seed_weights, name + "_seed_weights");
+		read_weights_der(derivatives, name + "_derivatives");
+		read_weights_der(seed_derivatives, name + "_seed_derivatives");
+		read_activations(activations, name + "_activations");
+		read_activations(seed_activations, name + "_seed_activations");
 	}
 
 };
@@ -797,7 +1007,7 @@ void read_files(string filename, vector<vector<float>>& inputs, vector<vector<fl
 
 ANG Train_ng(vector<vector<float>> inputs, vector<vector<float>> targets, vector<int> hidden_layers) {
 
-	ANG ang;
+	ANG ang(hidden_layers, 1, inputs[0].size());
 	ang.ANG_grow(inputs, targets, hidden_layers);
 
 	return ang;
@@ -826,16 +1036,33 @@ int main()
 	vector<vector<float>>  i = { {1, 1, 1}, {0, 0, 0}, {1, 1, 1} , {0,0,0} ,{1,1,1}, {1,1,1} , {0,0,0}, {0,0,0} ,{1,1,1} , {0,0,0}, {1, 1, 1}, {0, 0, 0}, {1, 1, 1} , { 0,0,0} ,{1,1,1}, {1,1,1} , {0,0,0}, {0,0,0} ,{1,1,1} , {0,0,0}, {1, 1, 1}, {0, 0, 0}, {1, 1, 1} , { 0,0,0} ,{1,1,1}, {1,1,1} , {0,0,0}, {0,0,0} ,{1,1,1} , {0,0,0}, {1, 1, 1}, {0, 0, 0}, {1, 1, 1} , { 0,0,0} ,{1,1,1}, {1,1,1} , {0,0,0}, {0,0,0} ,{1,1,1} , {0,0,0}, {1, 1, 1}, {0, 0, 0}, {1, 1, 1} , { 0,0,0} ,{1,1,1}, {1,1,1} , {0,0,0}, {0,0,0} ,{1,1,1} , {0,0,0} };
 	vector<vector<float>> t = { {1} , {0}, {0} , {0}, {1}, {1}, {0} , {0}, {1}, {0}, {1} , {0}, {1} , {0}, {1}, {1}, {0} , {0}, {1}, {0}, {1} , {0}, {1} , {0}, {1}, {1}, {0} , {0}, {1}, {0}, {1} , {0}, {1} , {0}, {1}, {1}, {0} , {0}, {1}, {0}, {1} , {0}, {1} , {0}, {1}, {1}, {0} , {0}, {1}, {0} };
 	ang = Train_ng(i, t, { 3,3 });
-	std::ostringstream oss;
-	ang.save(oss);
-	string s = oss.str();
-	ANG ang1;
-	std::istringstream iss;
-	iss.str(s);
-	ang1.load(iss);
+	//std::ostringstream oss;
+	//ang.save(oss);
+	ang.save_model("saveloadtest");
+	//string s = oss.str();
+	ANG ang2;
+	//std::istringstream iss;
+	//iss.str(s);
+	//ang2.load(iss);
+	ang2.load_model("saveloadtest");
+	/*
+	cout << "weights" << endl;
+	ang2.Print3D(ang2.weights);
+	cout << "seed_weights" << endl;
+	ang2.Print3D(ang2.seed_weights);
+	cout << "derivatives" << endl;
+	ang2.Print3D(ang2.derivatives);
+	cout << "seed_derivatives" << endl;
+	ang2.Print3D(ang2.seed_derivatives);
+	cout << "activations" << endl;
+	ang2.PrintMatrix(ang2.activations);
+	cout << "seed_activations" << endl;
+	ang2.PrintMatrix(ang2.seed_activations);
+	*/
 	vector<int> pred1 = test(ang, i);
 	for (int i = 0; i < pred1.size(); i++) cout << pred1[i] << " ";
-	vector<int> pred = test(ang1, i);
+	cout << endl;
+	vector<int> pred = test(ang2, i);
 	for (int i = 0; i < pred.size(); i++) cout << pred[i] << " ";
 	//ang.ANG_grow(i, t, {3,3});
 	//ang.create_seed();
